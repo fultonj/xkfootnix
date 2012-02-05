@@ -1,0 +1,104 @@
+Filename:                README
+Description:             Readme for xkfootnix
+Supported Langauge(s):   English
+Time-stamp:              <2012-02-04 13:46:14 fultonj> 
+# -------------------------------------------------------
+ABOUT: 
+
+This is a hack to get an xkeys usb footpedal: 
+
+  http://xkeys.com/xkeys/xkfoot.php
+
+triggering key presses events via xdotool:
+
+  http://www.semicomplete.com/projects/xdotool/
+
+on Linux-based systems running X. 
+
+Details:
+
+xkeys provides a GPL+LGPL'd SDK: 
+
+  http://xkeys.com/developer/LinuxSDK.php
+
+Which includes a short C program called test.c. I modifed this program
+to not sleep in order to increase the responsiveness and to produce
+less output. I then ran the program and observed the output and
+determined that certain columns of numbers consistently changed with
+pedal events. I then wrote a quick Python glue script, which the
+output of the test.c could be piped into in order to map the codes
+into xdotool; e.g.
+
+ "01 04" --> xdotool keydown ctrl
+ "01 00" --> xdotool keyup ctrl
+
+I then have my .xinitrc execute the piping of the two programs. It's a
+crude hack but it allowed me to get my footpedal working the way I
+wanted quickly ("showkey --keycode" returned nothing, if it had this
+wouldn't be necessary).  
+
+HOW TO INSTALL: 
+
+1. Install Dependencies
+Ubuntu/Debian:
+ apt-get install build-essential libqt4-dev \
+         libusb-1.0-0-dev cmake xdotool
+
+RedHat/CentOS/Fedora:
+ yum install cmake libusb-devel libusb1-devel \
+     qconf qt qt-devel qt-config gcc-c++ xdotool
+
+2. Get the SDK
+Download the SDK from xkeys.com or github.com and then install it as
+per the README.txt contained in the SDK (not this README): 
+
+  http://xkeys.com/developer/LinuxSDK.php
+  https://github.com/piengineering/xkeys
+
+xkfootnix has been tested with pihid32-1.0.0. On Fedora14, after
+installing the SDK, I had to add it to my library path:  
+
+ echo "/usr/local/lib" > /etc/ld.so.conf.d/piehd.conf 
+ ldconfig  
+
+It's a good idea at this point to run: 
+
+ /usr/local/bin/piehidtest
+
+and observe output. If you don't see any, don't proceed until you do.
+
+3. Modify the SDK test program
+
+Apply test.patch to test.c
+
+  patch test.c < test.patch
+
+The above really just comments out the sleep call and the printing 
+of some extra text. Re-run "make" and "make install" and then test
+running /usr/local/bin/piehidtest again and observe the output from
+pressing the foot pedal. 
+
+4. Test xkfootnix
+
+Pipe the output of piehidtest into xkfootnix: 
+
+ /usr/local/bin/piehidtest | python xkfootnix
+
+and test if holding down the larger middle button has the effect of
+holding down control and if holding down either side button has the
+effect of holding down alt. This is the default behavior I wanted 
+but it is easy to modify xkfootnix's global variables to run any key 
+supported by xdotool (http://www.semicomplete.com/projects/xdotool). 
+Modify the following lines in xkfootnix as you see fit: 
+
+ left = "alt"
+ middle = "ctrl"
+ right = "alt"
+
+Put xkfootnix somewhere you want to run and keep it. I prefer
+/usr/local/bin and this is consistent with piehidtest's "make install"
+script (make sure you make it executable).  Assuming that
+/usr/local/bin is in your path you should now be able to run: 
+
+ piehidtest | xkfootnix
+
