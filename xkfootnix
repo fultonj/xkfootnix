@@ -1,0 +1,111 @@
+#!/usr/bin/env python
+# Filename:                xkfootnix
+# Description:             xkeys footpdeal into xdotool
+# Supported Langauge(s):   Python 2.7.x
+# Time-stamp:              <2012-02-04 12:08:28 fultonj> 
+# -------------------------------------------------------
+# usage:
+# 
+#   piehidtest | xkfootnix
+#
+# Q: How do I map the foot pedals to the keys I want?
+# 
+# A: Set the left, middle, and right variables below
+#    to values supported by xdotool:
+#    http://www.semicomplete.com/projects/xdotool/
+# 
+# See the README hosted on github for more information:
+#
+#   https://github.com/fultonj/xkfootnix
+# -------------------------------------------------------
+left = "alt"
+middle = "ctrl"
+right = "alt"
+# -------------------------------------------------------
+# About: 
+# This is a hack to get an xkeys usb footpedal: 
+#
+#   http://xkeys.com/xkeys/xkfoot.php
+# 
+# Triggering key presses events via xdotool:
+#
+#   http://www.semicomplete.com/projects/xdotool/
+# 
+# xkeys provides a GPL+LGPLed SDK: 
+# 
+#   http://xkeys.com/developer/LinuxSDK.php
+# 
+# Which includes a short C program called test.c. 
+# I modifed this program to not sleep (to have 
+# real time response) and to produce less output. 
+# I then ran the program and observed the output
+# and determined that certain columns of numbers
+# consistently changed with pedal events. I then
+# wrote this python glue script, which the output
+# of the test.c could be piped into, to map the 
+# codes into xdotool; e.g.
+# 
+#  "01 04" --> xdotool keydown ctrl
+#  "01 00" --> xdotool keyup ctrl
+#
+# I then have my .xinitrc execute the piping of 
+# the two programs. It's a crude hack but it 
+# allowed me to get my footpedal working the way 
+# I wanted quickly ("showkey --keycode" returned
+# nothing, if it had this wouldn't be necessary).  
+#
+# How to install: 
+#
+# Ubuntu/Debian:
+#  apt-get install build-essential libqt4-dev \
+#          libusb-1.0-0-dev cmake
+#
+# RedHat/CentOS/Fedora:
+#  yum install cmake libusb-devel libusb1-devel \
+#      qconf qt qt-devel qt-config gcc-c++
+#
+# Download the SDK and install as per the README:  
+# 
+#   http://xkeys.com/developer/LinuxSDK.php
+#
+# On Fedora14 I had to "ldconfig /usr/local/lib" 
+# to get the new library recognized. I then did:
+#
+# echo "/usr/local/lib" > /etc/ld.so.conf.d/piehd.conf 
+# 
+# so the library would be in the search path after
+# reboots. 
+# 
+# * Apply hack.patch to test.c
+# * Re-run "make" and "make install"
+# * 
+# 
+# -------------------------------------------------------
+import sys
+import os
+
+while 1:
+    try:
+        input = sys.stdin.readline()
+        if (input):
+            if (len(input) > 10):
+                if (input[7] == '1'):
+                    if (input[10] == '2'):
+                        cmd = "xdotool keydown " + left
+                        os.popen(cmd).read()
+                    elif (input[10] == '4'):
+                        cmd = "xdotool keydown " + middle
+                        os.popen(cmd).read()
+                    elif (input[10] == '8'):
+                        cmd = "xdotool keydown " + right
+                        os.popen(cmd).read()
+                    if (input[10] == '0'):
+                        # release everything 
+                        cmd = "xdotool keyup " + left
+                        os.popen(cmd).read()
+                        cmd = "xdotool keyup " + middle
+                        os.popen(cmd).read()
+                        cmd = "xdotool keyup " + right
+                        os.popen(cmd).read()
+    except:
+        sys.exit()
